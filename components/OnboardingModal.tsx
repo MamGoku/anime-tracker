@@ -34,10 +34,10 @@ export default function OnboardingModal({ open, onComplete }: OnboardingModalPro
     })
 
     const data = await res.json()
+    setLoading(false)
 
     if (!res.ok) {
       setError(data.error ?? 'Fehler beim Erstellen des Profils')
-      setLoading(false)
       return
     }
 
@@ -48,15 +48,17 @@ export default function OnboardingModal({ open, onComplete }: OnboardingModalPro
 
   return (
     <Dialog open={open} onOpenChange={() => {}}>
-      <DialogContent className="sm:max-w-md" onPointerDownOutside={(e) => e.preventDefault()}>
+      <DialogContent className="sm:max-w-md" onPointerDownOutside={(e) => e.preventDefault()} onEscapeKeyDown={(e) => e.preventDefault()}>
         <DialogHeader>
           <DialogTitle className="text-xl">Willkommen beim Anime Tracker 🎌</DialogTitle>
         </DialogHeader>
+        <p className="text-sm text-neutral-500 -mt-2">Wähle einen Namen und Avatar um loszulegen.</p>
 
         <form onSubmit={handleSubmit} className="space-y-5 mt-2">
           <div>
-            <label className="block text-sm font-medium mb-1">Dein Name</label>
+            <label htmlFor="onboarding-name" className="block text-sm font-medium mb-1">Dein Name</label>
             <Input
+              id="onboarding-name"
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="z.B. max"
@@ -65,13 +67,15 @@ export default function OnboardingModal({ open, onComplete }: OnboardingModalPro
             />
           </div>
 
-          <div>
-            <label className="block text-sm font-medium mb-2">Wähle einen Avatar</label>
-            <div className="grid grid-cols-10 gap-1">
+          <fieldset>
+            <legend className="block text-sm font-medium mb-2">Wähle einen Avatar</legend>
+            <div className="grid grid-cols-5 sm:grid-cols-10 gap-1">
               {AVATAR_OPTIONS.map((emoji) => (
                 <button
                   key={emoji}
                   type="button"
+                  aria-label={`Avatar ${emoji} ${selectedAvatar === emoji ? '(ausgewählt)' : ''}`}
+                  aria-pressed={selectedAvatar === emoji}
                   onClick={() => setSelectedAvatar(emoji)}
                   className={`text-xl p-1 rounded transition-colors ${
                     selectedAvatar === emoji
@@ -83,9 +87,9 @@ export default function OnboardingModal({ open, onComplete }: OnboardingModalPro
                 </button>
               ))}
             </div>
-          </div>
+          </fieldset>
 
-          {error && <p className="text-red-500 text-sm">{error}</p>}
+          {error && <p className="text-red-500 text-sm" role="alert">{error}</p>}
 
           <Button type="submit" className="w-full" disabled={loading}>
             {loading ? 'Wird erstellt…' : 'Los geht\'s'}

@@ -17,20 +17,21 @@ interface AnimeCardProps {
 const STATUS_CYCLE: AnimeStatus[] = ['plan_to_watch', 'watching', 'completed', 'dropped']
 
 export default function AnimeCard({ entry, isOwner, onStatusChange, onDelete }: AnimeCardProps) {
-  const [loading, setLoading] = useState(false)
+  const [statusLoading, setStatusLoading] = useState(false)
+  const [deleteLoading, setDeleteLoading] = useState(false)
 
   async function handleCycleStatus() {
     const currentIndex = STATUS_CYCLE.indexOf(entry.status)
     const nextStatus = STATUS_CYCLE[(currentIndex + 1) % STATUS_CYCLE.length]
-    setLoading(true)
+    setStatusLoading(true)
     await onStatusChange(entry.id, nextStatus)
-    setLoading(false)
+    setStatusLoading(false)
   }
 
   async function handleDelete() {
-    setLoading(true)
+    setDeleteLoading(true)
     await onDelete(entry.id)
-    setLoading(false)
+    setDeleteLoading(false)
   }
 
   return (
@@ -55,28 +56,32 @@ export default function AnimeCard({ entry, isOwner, onStatusChange, onDelete }: 
           <StatusBadge status={entry.status} className="mt-1" />
         </div>
 
-        {isOwner && !loading && (
-          <div className="absolute top-1 right-1 flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+        {isOwner && (
+          <div className="absolute top-1 right-1 flex flex-col gap-1 opacity-0 group-hover:opacity-100 [@media(hover:none)]:opacity-100 transition-opacity">
             <button
               onClick={handleCycleStatus}
+              disabled={statusLoading || deleteLoading}
               title={`Status wechseln (aktuell: ${STATUS_LABELS[entry.status]})`}
-              className="bg-black/70 hover:bg-black rounded p-1 text-white"
+              aria-label={`Status wechseln, aktuell: ${STATUS_LABELS[entry.status]}`}
+              className="bg-black/70 hover:bg-black rounded p-1 text-white disabled:opacity-50"
             >
-              <RefreshCw size={12} />
+              {statusLoading
+                ? <div className="w-3 h-3 border border-white border-t-transparent rounded-full animate-spin" />
+                : <RefreshCw size={12} aria-hidden="true" />
+              }
             </button>
             <button
               onClick={handleDelete}
+              disabled={statusLoading || deleteLoading}
               title="Eintrag löschen"
-              className="bg-black/70 hover:bg-red-600 rounded p-1 text-white"
+              aria-label={`${entry.title} löschen`}
+              className="bg-black/70 hover:bg-red-600 rounded p-1 text-white disabled:opacity-50"
             >
-              <Trash2 size={12} />
+              {deleteLoading
+                ? <div className="w-3 h-3 border border-white border-t-transparent rounded-full animate-spin" />
+                : <Trash2 size={12} aria-hidden="true" />
+              }
             </button>
-          </div>
-        )}
-
-        {loading && (
-          <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-            <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
           </div>
         )}
       </div>

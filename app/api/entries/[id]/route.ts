@@ -1,7 +1,7 @@
 import { getEntry, updateEntryStatus, deleteEntry } from '@/lib/kv'
+import { VALID_STATUSES } from '@/lib/types'
 import type { AnimeStatus } from '@/lib/types'
-
-const VALID_STATUSES: AnimeStatus[] = ['watching', 'completed', 'dropped', 'plan_to_watch']
+import type { NextRequest } from 'next/server'
 
 export async function PATCH(
   request: Request,
@@ -24,12 +24,13 @@ export async function PATCH(
 }
 
 export async function DELETE(
-  request: Request,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params
-  const body = await request.json()
-  const { userId } = body
+  const userId = request.nextUrl.searchParams.get('userId')
+
+  if (!userId) return Response.json({ error: 'userId fehlt' }, { status: 400 })
 
   const entry = await getEntry(id)
   if (!entry) return Response.json({ error: 'Eintrag nicht gefunden' }, { status: 404 })

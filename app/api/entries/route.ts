@@ -1,8 +1,7 @@
 import type { NextRequest } from 'next/server'
 import { getAllEntries, getUserEntries, createEntry, getUser } from '@/lib/kv'
+import { VALID_STATUSES } from '@/lib/types'
 import type { AnimeStatus } from '@/lib/types'
-
-const VALID_STATUSES: AnimeStatus[] = ['watching', 'completed', 'dropped', 'plan_to_watch']
 
 export async function GET(request: NextRequest) {
   const userId = request.nextUrl.searchParams.get('userId')

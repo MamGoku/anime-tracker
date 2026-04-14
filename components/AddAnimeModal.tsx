@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import Image from 'next/image'
+import { X } from 'lucide-react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -12,7 +13,7 @@ import type { AnimeStatus, JikanAnime, LocalUser } from '@/lib/types'
 interface AddAnimeModalProps {
   open: boolean
   onClose: () => void
-  onAdd: () => void
+  onAdd: () => Promise<void>
   currentUser: LocalUser
 }
 
@@ -41,9 +42,13 @@ export default function AddAnimeModal({ open, onClose, onAdd, currentUser }: Add
         setSearching(false)
       }
     }, 500)
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current)
+    }
   }, [query])
 
   function handleClose() {
+    if (debounceRef.current) clearTimeout(debounceRef.current)
     setQuery('')
     setResults([])
     setSelected(null)
@@ -78,7 +83,8 @@ export default function AddAnimeModal({ open, onClose, onAdd, currentUser }: Add
     }
 
     handleClose()
-    onAdd()
+    await onAdd()
+    setAdding(false)
   }
 
   return (
@@ -90,20 +96,22 @@ export default function AddAnimeModal({ open, onClose, onAdd, currentUser }: Add
 
         <div className="space-y-4 mt-2">
           <Input
+            id="anime-search"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Anime suchen…"
             autoFocus
+            aria-label="Anime suchen"
           />
 
           {searching && (
-            <p className="text-sm text-neutral-500 text-center">Suche läuft…</p>
+            <p className="text-sm text-neutral-500 text-center" aria-live="polite">Suche läuft…</p>
           )}
 
           {results.length > 0 && !selected && (
-            <ul className="max-h-64 overflow-y-auto space-y-1 border rounded-md p-1">
+            <ul role="listbox" aria-label="Suchergebnisse" className="max-h-64 overflow-y-auto space-y-1 border rounded-md p-1">
               {results.map((anime) => (
-                <li key={anime.mal_id}>
+                <li key={anime.mal_id} role="option" aria-selected={false}>
                   <button
                     onClick={() => setSelected(anime)}
                     className="w-full flex items-center gap-3 p-2 rounded hover:bg-neutral-100 dark:hover:bg-neutral-800 text-left"
@@ -111,7 +119,7 @@ export default function AddAnimeModal({ open, onClose, onAdd, currentUser }: Add
                     {anime.images.jpg.image_url && (
                       <Image
                         src={anime.images.jpg.image_url}
-                        alt={anime.title}
+                        alt=""
                         width={32}
                         height={44}
                         className="rounded object-cover flex-shrink-0"
@@ -136,7 +144,7 @@ export default function AddAnimeModal({ open, onClose, onAdd, currentUser }: Add
               {selected.images.jpg.image_url && (
                 <Image
                   src={selected.images.jpg.image_url}
-                  alt={selected.title}
+                  alt={selected.title_english ?? selected.title}
                   width={48}
                   height={68}
                   className="rounded object-cover flex-shrink-0"
@@ -148,18 +156,19 @@ export default function AddAnimeModal({ open, onClose, onAdd, currentUser }: Add
               </div>
               <button
                 onClick={() => setSelected(null)}
-                className="text-neutral-400 hover:text-neutral-600 text-sm flex-shrink-0"
+                aria-label="Auswahl aufheben"
+                className="text-neutral-400 hover:text-neutral-600 flex-shrink-0"
               >
-                ✕
+                <X size={14} aria-hidden="true" />
               </button>
             </div>
           )}
 
           {selected && (
             <div>
-              <label className="block text-sm font-medium mb-1">Status</label>
+              <label htmlFor="anime-status" className="block text-sm font-medium mb-1">Status</label>
               <Select value={status} onValueChange={(v) => setStatus(v as AnimeStatus)}>
-                <SelectTrigger>
+                <SelectTrigger id="anime-status">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -171,7 +180,7 @@ export default function AddAnimeModal({ open, onClose, onAdd, currentUser }: Add
             </div>
           )}
 
-          {error && <p className="text-red-500 text-sm">{error}</p>}
+          {error && <p className="text-red-500 text-sm" role="alert">{error}</p>}
 
           <div className="flex gap-2 justify-end">
             <Button variant="outline" onClick={handleClose} disabled={adding}>Abbrechen</Button>

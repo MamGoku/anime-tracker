@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button'
 import OnboardingModal from './OnboardingModal'
 import AddAnimeModal from './AddAnimeModal'
 import UserCard from './UserCard'
-import type { AnimeStatus, LocalUser, UserWithEntries } from '@/lib/types'
+import type { AnimeStatus, LocalUser, User, UserWithEntries } from '@/lib/types'
 
 interface OverviewClientProps {
   initialData: UserWithEntries[]
@@ -19,8 +19,10 @@ export default function OverviewClient({ initialData }: OverviewClientProps) {
   const [showOnboarding, setShowOnboarding] = useState(false)
   const [showAddAnime, setShowAddAnime] = useState(false)
   const [data, setData] = useState<UserWithEntries[]>(initialData)
+  const [refreshError, setRefreshError] = useState('')
 
   useEffect(() => {
+    if (typeof window === 'undefined') return
     const stored = localStorage.getItem('anime-tracker-user')
     if (stored) {
       setCurrentUser(JSON.parse(stored))
@@ -30,35 +32,40 @@ export default function OverviewClient({ initialData }: OverviewClientProps) {
   }, [])
 
   const refresh = useCallback(async () => {
-    const res = await fetch('/api/entries')
-    const { entries } = await res.json()
-    const usersRes = await fetch('/api/users')
-    const { users } = await usersRes.json()
-
-    const updated: UserWithEntries[] = users.map((user: { name: string; avatar: string; createdAt: string }) => ({
-      user,
-      entries: entries.filter((e: { userId: string }) => e.userId === user.name),
-    }))
-    setData(updated)
+    try {
+      const [entriesRes, usersRes] = await Promise.all([
+        fetch('/api/entries'),
+        fetch('/api/users'),
+      ])
+      if (!entriesRes.ok || !usersRes.ok) throw new Error('Fehler beim Laden')
+      const { entries } = await entriesRes.json()
+      const { users } = await usersRes.json()
+      const updated: UserWithEntries[] = users.map((user: User) => ({
+        user,
+        entries: entries.filter((e: { userId: string }) => e.userId === user.name),
+      }))
+      setData(updated)
+      setRefreshError('')
+    } catch {
+      setRefreshError('Daten konnten nicht geladen werden.')
+    }
   }, [])
 
-  async function handleStatusChange(id: string, status: AnimeStatus) {
-    await fetch(`/api/entries/${id}`, {
+  const handleStatusChange = useCallback(async (id: string, status: AnimeStatus) => {
+    const res = await fetch(`/api/entries/${id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ status, userId: currentUser?.name }),
     })
-    await refresh()
-  }
+    if (res.ok) await refresh()
+  }, [currentUser, refresh])
 
-  async function handleDelete(id: string) {
-    await fetch(`/api/entries/${id}`, {
+  const handleDelete = useCallback(async (id: string) => {
+    const res = await fetch(`/api/entries/${id}?userId=${encodeURIComponent(currentUser?.name ?? '')}`, {
       method: 'DELETE',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ userId: currentUser?.name }),
     })
-    await refresh()
-  }
+    if (res.ok) await refresh()
+  }, [currentUser, refresh])
 
   function handleOnboardingComplete(user: LocalUser) {
     setCurrentUser(user)
@@ -72,12 +79,13 @@ export default function OverviewClient({ initialData }: OverviewClientProps) {
     setShowOnboarding(true)
   }
 
-  // Sort: current user first, then alphabetically
   const sortedData = [...data].sort((a, b) => {
     if (currentUser && a.user.name === currentUser.name) return -1
     if (currentUser && b.user.name === currentUser.name) return 1
     return a.user.name.localeCompare(b.user.name)
   })
+
+  const hasAnyEntries = sortedData.some((d) => d.entries.length > 0)
 
   return (
     <div className="min-h-screen bg-neutral-950 text-neutral-100">
@@ -95,15 +103,17 @@ export default function OverviewClient({ initialData }: OverviewClientProps) {
                   {currentUser.avatar} <span className="capitalize">{currentUser.name}</span>
                 </span>
                 <Button size="sm" onClick={() => setShowAddAnime(true)}>
-                  <Plus size={16} className="mr-1" />
+                  <Plus size={16} className="mr-1" aria-hidden="true" />
                   Anime hinzufügen
                 </Button>
                 <button
                   onClick={handleLogout}
+                  aria-label="Abmelden"
                   title="Abmelden"
                   className="text-neutral-500 hover:text-neutral-300 transition-colors"
                 >
-                  <LogOut size={16} />
+                  <LogOut size={16} aria-hidden="true" />
+                  <span className="sr-only">Abmelden</span>
                 </button>
               </>
             )}
@@ -112,7 +122,10 @@ export default function OverviewClient({ initialData }: OverviewClientProps) {
       </header>
 
       <main className="max-w-6xl mx-auto px-6 py-8">
-        {sortedData.length === 0 ? (
+        {refreshError && (
+          <p className="text-red-400 text-sm mb-4">{refreshError}</p>
+        )}
+        {!hasAnyEntries ? (
           <p className="text-neutral-500 text-center mt-16">
             Noch keine Einträge — füge deinen ersten Anime hinzu!
           </p>
@@ -140,8 +153,8 @@ export default function OverviewClient({ initialData }: OverviewClientProps) {
           open={showAddAnime}
           onClose={() => setShowAddAnime(false)}
           onAdd={async () => {
-            setShowAddAnime(false)
             await refresh()
+            setShowAddAnime(false)
           }}
           currentUser={currentUser}
         />

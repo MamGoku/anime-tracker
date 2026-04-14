@@ -59,11 +59,13 @@ export const STATUS_LABELS: Record<AnimeStatus, string> = {
 }
 
 export const STATUS_COLORS: Record<AnimeStatus, string> = {
-  watching: 'bg-blue-500 text-white hover:bg-blue-600',
-  completed: 'bg-green-500 text-white hover:bg-green-600',
-  dropped: 'bg-red-500 text-white hover:bg-red-600',
-  plan_to_watch: 'bg-yellow-400 text-black hover:bg-yellow-500',
+  watching: 'bg-blue-500 text-white',
+  completed: 'bg-green-500 text-white',
+  dropped: 'bg-red-500 text-white',
+  plan_to_watch: 'bg-yellow-400 text-black',
 }
+
+export const VALID_STATUSES: AnimeStatus[] = ['watching', 'completed', 'dropped', 'plan_to_watch']
 
 export const AVATAR_OPTIONS = [
   '🐱', '🐶', '🦊', '🐼', '🐨', '🦁', '🐸', '🐺',

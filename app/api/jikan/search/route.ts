@@ -6,6 +6,10 @@ export async function GET(request: NextRequest) {
   if (q.trim().length < 2) {
     return Response.json({ results: [] })
   }
-  const results = await searchAnime(q)
-  return Response.json({ results })
+  try {
+    const results = await searchAnime(q)
+    return Response.json({ results })
+  } catch {
+    return Response.json({ results: [] }, { status: 502 })
+  }
 }
