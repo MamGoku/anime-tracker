@@ -8,6 +8,7 @@ import OnboardingModal from './OnboardingModal'
 import AddAnimeModal from './AddAnimeModal'
 import UserCard from './UserCard'
 import type { AnimeStatus, LocalUser, User, UserWithEntries } from '@/lib/types'
+import { STATUS_LABELS } from '@/lib/types'
 
 interface OverviewClientProps {
   initialData: UserWithEntries[]
@@ -20,6 +21,7 @@ export default function OverviewClient({ initialData }: OverviewClientProps) {
   const [showAddAnime, setShowAddAnime] = useState(false)
   const [data, setData] = useState<UserWithEntries[]>(initialData)
   const [refreshError, setRefreshError] = useState('')
+  const [activeFilter, setActiveFilter] = useState<AnimeStatus | null>(null)
 
   useEffect(() => {
     if (typeof window === 'undefined') return
@@ -85,7 +87,12 @@ export default function OverviewClient({ initialData }: OverviewClientProps) {
     return a.user.name.localeCompare(b.user.name)
   })
 
-  const hasAnyEntries = sortedData.some((d) => d.entries.length > 0)
+  const filteredData = sortedData.map(({ user, entries }) => ({
+    user,
+    entries: activeFilter ? entries.filter((e) => e.status === activeFilter) : entries,
+  }))
+
+  const hasAnyEntries = filteredData.some((d) => d.entries.length > 0)
 
   return (
     <div className="min-h-screen bg-neutral-950 text-neutral-100">
@@ -125,12 +132,39 @@ export default function OverviewClient({ initialData }: OverviewClientProps) {
         {refreshError && (
           <p className="text-red-400 text-sm mb-4">{refreshError}</p>
         )}
+
+        <div className="flex flex-wrap gap-2 mb-6">
+          <button
+            onClick={() => setActiveFilter(null)}
+            className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
+              activeFilter === null
+                ? 'bg-neutral-100 text-neutral-900'
+                : 'bg-neutral-800 text-neutral-400 hover:bg-neutral-700'
+            }`}
+          >
+            Alle
+          </button>
+          {(Object.entries(STATUS_LABELS) as [AnimeStatus, string][]).map(([status, label]) => (
+            <button
+              key={status}
+              onClick={() => setActiveFilter(activeFilter === status ? null : status)}
+              className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
+                activeFilter === status
+                  ? 'bg-neutral-100 text-neutral-900'
+                  : 'bg-neutral-800 text-neutral-400 hover:bg-neutral-700'
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+
         {!hasAnyEntries ? (
           <p className="text-neutral-500 text-center mt-16">
-            Noch keine Einträge — füge deinen ersten Anime hinzu!
+            {activeFilter ? `Keine Einträge mit Status "${STATUS_LABELS[activeFilter]}"` : 'Noch keine Einträge — füge deinen ersten Anime hinzu!'}
           </p>
         ) : (
-          sortedData.map(({ user, entries }) => (
+          filteredData.map(({ user, entries }) => (
             <UserCard
               key={user.name}
               user={user}
