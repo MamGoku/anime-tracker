@@ -39,7 +39,7 @@ export async function createUser(name: string, avatar: string): Promise<User> {
 // --- Entry operations ---
 
 export async function getUserEntries(userId: string): Promise<AnimeEntry[]> {
-  const ids = await redis.lrange(`user:${userId}:entries`, 0, 49)
+  const ids = await redis.lrange(`user:${userId}:entries`, 0, -1)
   if (ids.length === 0) return []
 
   const pipeline = redis.pipeline()
