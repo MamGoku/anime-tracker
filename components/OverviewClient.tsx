@@ -196,10 +196,7 @@ export default function OverviewClient({ initialData }: OverviewClientProps) {
         <AddAnimeModal
           open={showAddAnime}
           onClose={() => setShowAddAnime(false)}
-          onAdd={async () => {
-            await refresh()
-            setShowAddAnime(false)
-          }}
+          onAdd={refresh}
           currentUser={currentUser}
         />
       )}
