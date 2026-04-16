@@ -49,7 +49,7 @@ export async function getUserEntries(userId: string): Promise<AnimeEntry[]> {
   const results = await pipeline.exec()
   return (results as (AnimeEntry | null)[])
     .filter((e): e is AnimeEntry => e !== null)
-    .map((e) => ({ ...e, animeId: Number(e.animeId) }))
+    .map((e) => ({ ...e, animeId: Number(e.animeId), season: e.season ? Number(e.season) : 1 }))
 }
 
 export async function getAllEntries(): Promise<AnimeEntry[]> {
@@ -63,6 +63,7 @@ export async function createEntry(
 ): Promise<AnimeEntry> {
   const entry: AnimeEntry = {
     ...data,
+    season: data.season ?? 1,
     id: uuidv4(),
     addedAt: new Date().toISOString(),
   }
@@ -77,6 +78,10 @@ export async function updateEntryStatus(id: string, status: AnimeStatus): Promis
   await redis.hset(`entry:${id}`, { status })
 }
 
+export async function updateEntrySeason(id: string, season: number): Promise<void> {
+  await redis.hset(`entry:${id}`, { season })
+}
+
 export async function deleteEntry(id: string, userId: string): Promise<void> {
   const pipeline = redis.pipeline()
   pipeline.lrem(`user:${userId}:entries`, 0, id)
@@ -87,5 +92,5 @@ export async function deleteEntry(id: string, userId: string): Promise<void> {
 export async function getEntry(id: string): Promise<AnimeEntry | null> {
   const data = await redis.hgetall(`entry:${id}`)
   if (!data || Object.keys(data).length === 0) return null
-  return { ...(data as unknown as AnimeEntry), animeId: Number((data as unknown as AnimeEntry).animeId) }
+  return { ...(data as unknown as AnimeEntry), animeId: Number((data as unknown as AnimeEntry).animeId), season: (data as unknown as AnimeEntry).season ? Number((data as unknown as AnimeEntry).season) : 1 }
 }

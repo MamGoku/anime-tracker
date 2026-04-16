@@ -8,6 +8,7 @@ interface UserCardProps {
   entries: AnimeEntry[]
   isCurrentUser: boolean
   onStatusChange: (id: string, status: AnimeStatus) => Promise<void>
+  onSeasonChange: (id: string, season: number) => Promise<void>
   onDelete: (id: string) => Promise<void>
 }
 
@@ -16,6 +17,7 @@ export default function UserCard({
   entries,
   isCurrentUser,
   onStatusChange,
+  onSeasonChange,
   onDelete,
 }: UserCardProps) {
   return (
@@ -45,6 +47,7 @@ export default function UserCard({
               entry={entry}
               isOwner={isCurrentUser}
               onStatusChange={onStatusChange}
+              onSeasonChange={onSeasonChange}
               onDelete={onDelete}
             />
           ))}

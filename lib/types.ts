@@ -14,6 +14,7 @@ export interface AnimeEntry {
   coverImage: string
   synopsis: string
   status: AnimeStatus
+  season?: number
   addedAt: string
 }
 
