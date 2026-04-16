@@ -4,7 +4,7 @@ import Image from 'next/image'
 import { Trash2, RefreshCw } from 'lucide-react'
 import { useState } from 'react'
 import type { AnimeEntry, AnimeStatus } from '@/lib/types'
-import { STATUS_LABELS } from '@/lib/types'
+import { STATUS_LABELS, parseDurationMinutes } from '@/lib/types'
 import StatusBadge from './StatusBadge'
 
 interface AnimeCardProps {
@@ -19,6 +19,14 @@ const STATUS_CYCLE: AnimeStatus[] = ['plan_to_watch', 'watching', 'completed', '
 export default function AnimeCard({ entry, isOwner, onStatusChange, onDelete }: AnimeCardProps) {
   const [statusLoading, setStatusLoading] = useState(false)
   const [deleteLoading, setDeleteLoading] = useState(false)
+
+  const totalHours = (() => {
+    if (!entry.duration || !entry.episodes) return null
+    const mins = parseDurationMinutes(entry.duration)
+    if (!mins) return null
+    const total = mins * entry.episodes * (entry.season ?? 1)
+    return total < 60 ? `${total}min` : `~${Math.round(total / 60)}h`
+  })()
 
   async function handleCycleStatus() {
     const currentIndex = STATUS_CYCLE.indexOf(entry.status)
@@ -59,6 +67,9 @@ export default function AnimeCard({ entry, isOwner, onStatusChange, onDelete }: 
               <span className="text-xs font-semibold bg-white/20 text-white rounded px-1 leading-tight">
                 S{entry.season}
               </span>
+            )}
+            {totalHours && (
+              <span className="text-xs text-white/60 leading-tight">{totalHours}</span>
             )}
           </div>
         </div>

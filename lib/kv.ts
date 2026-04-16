@@ -49,7 +49,7 @@ export async function getUserEntries(userId: string): Promise<AnimeEntry[]> {
   const results = await pipeline.exec()
   return (results as (AnimeEntry | null)[])
     .filter((e): e is AnimeEntry => e !== null)
-    .map((e) => ({ ...e, animeId: Number(e.animeId), season: e.season ? Number(e.season) : 1 }))
+    .map((e) => ({ ...e, animeId: Number(e.animeId), season: e.season ? Number(e.season) : 1, episodes: e.episodes ? Number(e.episodes) : undefined }))
 }
 
 export async function getAllEntries(): Promise<AnimeEntry[]> {
@@ -88,5 +88,5 @@ export async function deleteEntry(id: string, userId: string): Promise<void> {
 export async function getEntry(id: string): Promise<AnimeEntry | null> {
   const data = await redis.hgetall(`entry:${id}`)
   if (!data || Object.keys(data).length === 0) return null
-  return { ...(data as unknown as AnimeEntry), animeId: Number((data as unknown as AnimeEntry).animeId), season: (data as unknown as AnimeEntry).season ? Number((data as unknown as AnimeEntry).season) : 1 }
+  return { ...(data as unknown as AnimeEntry), animeId: Number((data as unknown as AnimeEntry).animeId), season: (data as unknown as AnimeEntry).season ? Number((data as unknown as AnimeEntry).season) : 1, episodes: (data as unknown as AnimeEntry).episodes ? Number((data as unknown as AnimeEntry).episodes) : undefined }
 }

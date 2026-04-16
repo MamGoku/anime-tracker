@@ -1,6 +1,7 @@
 'use client'
 
 import type { AnimeEntry, AnimeStatus, User } from '@/lib/types'
+import { parseDurationMinutes } from '@/lib/types'
 import AnimeCard from './AnimeCard'
 
 interface UserCardProps {
@@ -18,6 +19,19 @@ export default function UserCard({
   onStatusChange,
   onDelete,
 }: UserCardProps) {
+  const completedMinutes = entries
+    .filter((e) => e.status === 'completed')
+    .reduce((sum, e) => {
+      if (!e.duration || !e.episodes) return sum
+      const mins = parseDurationMinutes(e.duration)
+      if (!mins) return sum
+      return sum + mins * e.episodes * (e.season ?? 1)
+    }, 0)
+  const completedHours = completedMinutes > 0
+    ? completedMinutes < 60
+      ? `${completedMinutes}min`
+      : `~${Math.round(completedMinutes / 60)}h`
+    : null
   return (
     <div className="mb-8">
       <div className="flex items-center gap-2 mb-3">
@@ -31,6 +45,9 @@ export default function UserCard({
         <span className="text-xs text-neutral-500 ml-1">
           {entries.length} {entries.length === 1 ? 'Eintrag' : 'Einträge'}
         </span>
+        {completedHours && (
+          <span className="text-xs text-neutral-500">· {completedHours} fertig geschaut</span>
+        )}
       </div>
 
       {entries.length === 0 ? (

@@ -15,6 +15,8 @@ export interface AnimeEntry {
   synopsis: string
   status: AnimeStatus
   season?: number
+  duration?: string
+  episodes?: number
   addedAt: string
 }
 
@@ -23,6 +25,7 @@ export interface JikanAnime {
   title: string
   title_english: string | null
   synopsis: string | null
+  duration: string | null
   images: {
     jpg: {
       image_url: string
@@ -73,3 +76,17 @@ export const AVATAR_OPTIONS = [
   '🦄', '🐙', '🦋', '🌸', '⭐', '🔥', '🎭', '🎌',
   '🗡️', '🌙', '⚡', '🎯',
 ]
+
+/** Parst Jikan-Dauer-Strings wie "24 min per ep", "1 hr 44 min", "23 min" → Minuten als Zahl */
+export function parseDurationMinutes(duration: string): number | null {
+  const perEp = duration.match(/(\d+)\s*min\s*per\s*ep/i)
+  if (perEp) return parseInt(perEp[1])
+
+  const hrMin = duration.match(/(\d+)\s*hr(?:\s*(\d+)\s*min)?/i)
+  if (hrMin) return parseInt(hrMin[1]) * 60 + parseInt(hrMin[2] ?? '0')
+
+  const minOnly = duration.match(/^(\d+)\s*min$/i)
+  if (minOnly) return parseInt(minOnly[1])
+
+  return null
+}

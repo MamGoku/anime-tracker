@@ -101,6 +101,8 @@ export default function AddAnimeModal({ open, onClose, onAdd, currentUser }: Add
             synopsis: anime.synopsis ?? '',
             status,
             season,
+            duration: anime.duration ?? undefined,
+            episodes: anime.episodes ?? undefined,
           }),
         })
       )

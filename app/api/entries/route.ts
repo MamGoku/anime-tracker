@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: Request) {
   const body = await request.json()
-  const { userId, animeId, title, coverImage, synopsis, status } = body
+  const { userId, animeId, title, coverImage, synopsis, status, season, duration, episodes } = body
 
   if (!userId || !animeId || !title || !status) {
     return Response.json({ error: 'Pflichtfelder fehlen' }, { status: 400 })
@@ -37,6 +37,9 @@ export async function POST(request: Request) {
     coverImage: coverImage ?? '',
     synopsis: synopsis ? String(synopsis).slice(0, 200) : '',
     status,
+    season: season ? Number(season) : 1,
+    duration: duration ? String(duration) : undefined,
+    episodes: episodes ? Number(episodes) : undefined,
   })
 
   return Response.json({ entry }, { status: 201 })
