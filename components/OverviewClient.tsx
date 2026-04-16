@@ -62,15 +62,6 @@ export default function OverviewClient({ initialData }: OverviewClientProps) {
     if (res.ok) await refresh()
   }, [currentUser, refresh])
 
-  const handleSeasonChange = useCallback(async (id: string, season: number) => {
-    const res = await fetch(`/api/entries/${id}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ season, userId: currentUser?.name }),
-    })
-    if (res.ok) await refresh()
-  }, [currentUser, refresh])
-
   const handleDelete = useCallback(async (id: string) => {
     const res = await fetch(`/api/entries/${id}?userId=${encodeURIComponent(currentUser?.name ?? '')}`, {
       method: 'DELETE',
@@ -180,7 +171,6 @@ export default function OverviewClient({ initialData }: OverviewClientProps) {
               entries={entries}
               isCurrentUser={currentUser?.name === user.name}
               onStatusChange={handleStatusChange}
-              onSeasonChange={handleSeasonChange}
               onDelete={handleDelete}
             />
           ))

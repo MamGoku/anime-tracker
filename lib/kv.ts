@@ -78,10 +78,6 @@ export async function updateEntryStatus(id: string, status: AnimeStatus): Promis
   await redis.hset(`entry:${id}`, { status })
 }
 
-export async function updateEntrySeason(id: string, season: number): Promise<void> {
-  await redis.hset(`entry:${id}`, { season })
-}
-
 export async function deleteEntry(id: string, userId: string): Promise<void> {
   const pipeline = redis.pipeline()
   pipeline.lrem(`user:${userId}:entries`, 0, id)

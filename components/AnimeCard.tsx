@@ -1,7 +1,7 @@
 'use client'
 
 import Image from 'next/image'
-import { Trash2, RefreshCw, ChevronUp, ChevronDown } from 'lucide-react'
+import { Trash2, RefreshCw } from 'lucide-react'
 import { useState } from 'react'
 import type { AnimeEntry, AnimeStatus } from '@/lib/types'
 import { STATUS_LABELS } from '@/lib/types'
@@ -11,15 +11,13 @@ interface AnimeCardProps {
   entry: AnimeEntry
   isOwner: boolean
   onStatusChange: (id: string, status: AnimeStatus) => Promise<void>
-  onSeasonChange: (id: string, season: number) => Promise<void>
   onDelete: (id: string) => Promise<void>
 }
 
 const STATUS_CYCLE: AnimeStatus[] = ['plan_to_watch', 'watching', 'completed', 'dropped']
 
-export default function AnimeCard({ entry, isOwner, onStatusChange, onSeasonChange, onDelete }: AnimeCardProps) {
+export default function AnimeCard({ entry, isOwner, onStatusChange, onDelete }: AnimeCardProps) {
   const [statusLoading, setStatusLoading] = useState(false)
-  const [seasonLoading, setSeasonLoading] = useState(false)
   const [deleteLoading, setDeleteLoading] = useState(false)
 
   async function handleCycleStatus() {
@@ -28,20 +26,6 @@ export default function AnimeCard({ entry, isOwner, onStatusChange, onSeasonChan
     setStatusLoading(true)
     await onStatusChange(entry.id, nextStatus)
     setStatusLoading(false)
-  }
-
-  async function handleSeasonUp() {
-    setSeasonLoading(true)
-    await onSeasonChange(entry.id, (entry.season ?? 1) + 1)
-    setSeasonLoading(false)
-  }
-
-  async function handleSeasonDown() {
-    const current = entry.season ?? 1
-    if (current <= 1) return
-    setSeasonLoading(true)
-    await onSeasonChange(entry.id, current - 1)
-    setSeasonLoading(false)
   }
 
   async function handleDelete() {
@@ -83,7 +67,7 @@ export default function AnimeCard({ entry, isOwner, onStatusChange, onSeasonChan
           <div className="absolute top-1 right-1 flex flex-col gap-1 opacity-0 group-hover:opacity-100 [@media(hover:none)]:opacity-100 transition-opacity">
             <button
               onClick={handleCycleStatus}
-              disabled={statusLoading || seasonLoading || deleteLoading}
+              disabled={statusLoading || deleteLoading}
               title={`Status wechseln (aktuell: ${STATUS_LABELS[entry.status]})`}
               aria-label={`Status wechseln, aktuell: ${STATUS_LABELS[entry.status]}`}
               className="bg-black/70 hover:bg-black rounded p-1 text-white disabled:opacity-50"
@@ -94,29 +78,8 @@ export default function AnimeCard({ entry, isOwner, onStatusChange, onSeasonChan
               }
             </button>
             <button
-              onClick={handleSeasonUp}
-              disabled={statusLoading || seasonLoading || deleteLoading}
-              title={`Season erhöhen (aktuell: S${entry.season ?? 1})`}
-              aria-label={`Season erhöhen, aktuell S${entry.season ?? 1}`}
-              className="bg-black/70 hover:bg-black rounded p-1 text-white disabled:opacity-50"
-            >
-              {seasonLoading
-                ? <div className="w-3 h-3 border border-white border-t-transparent rounded-full animate-spin" />
-                : <ChevronUp size={12} aria-hidden="true" />
-              }
-            </button>
-            <button
-              onClick={handleSeasonDown}
-              disabled={statusLoading || seasonLoading || deleteLoading || (entry.season ?? 1) <= 1}
-              title="Season verringern"
-              aria-label="Season verringern"
-              className="bg-black/70 hover:bg-black rounded p-1 text-white disabled:opacity-50"
-            >
-              <ChevronDown size={12} aria-hidden="true" />
-            </button>
-            <button
               onClick={handleDelete}
-              disabled={statusLoading || seasonLoading || deleteLoading}
+              disabled={statusLoading || deleteLoading}
               title="Eintrag löschen"
               aria-label={`${entry.title} löschen`}
               className="bg-black/70 hover:bg-red-600 rounded p-1 text-white disabled:opacity-50"

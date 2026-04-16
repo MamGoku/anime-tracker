@@ -1,4 +1,4 @@
-import { getEntry, updateEntryStatus, updateEntrySeason, deleteEntry } from '@/lib/kv'
+import { getEntry, updateEntryStatus, deleteEntry } from '@/lib/kv'
 import { VALID_STATUSES } from '@/lib/types'
 import type { AnimeStatus } from '@/lib/types'
 import type { NextRequest } from 'next/server'
@@ -9,24 +9,15 @@ export async function PATCH(
 ) {
   const { id } = await params
   const body = await request.json()
-  const { status, season, userId } = body
-
-  const entry = await getEntry(id)
-  if (!entry) return Response.json({ error: 'Eintrag nicht gefunden' }, { status: 404 })
-  if (entry.userId !== userId) return Response.json({ error: 'Nicht erlaubt' }, { status: 403 })
-
-  if (season !== undefined) {
-    const s = Number(season)
-    if (!Number.isInteger(s) || s < 1) {
-      return Response.json({ error: 'Ungültige Season' }, { status: 400 })
-    }
-    await updateEntrySeason(id, s)
-    return Response.json({ ok: true })
-  }
+  const { status, userId } = body
 
   if (!VALID_STATUSES.includes(status)) {
     return Response.json({ error: 'Ungültiger Status' }, { status: 400 })
   }
+
+  const entry = await getEntry(id)
+  if (!entry) return Response.json({ error: 'Eintrag nicht gefunden' }, { status: 404 })
+  if (entry.userId !== userId) return Response.json({ error: 'Nicht erlaubt' }, { status: 403 })
 
   await updateEntryStatus(id, status)
   return Response.json({ ok: true })
